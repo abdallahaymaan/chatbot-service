@@ -43,7 +43,7 @@ This document explains how to run the chatbot service with PostgreSQL using Dock
 ## Services
 
 ### PostgreSQL Database
-- **Image**: postgres:15-alpine
+- **Image**: postgres:16-alpine
 - **Port**: 5432
 - **Database**: chatbot_db
 - **Username**: chatbot_user
