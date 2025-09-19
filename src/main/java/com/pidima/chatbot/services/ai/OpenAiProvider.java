@@ -1,8 +1,6 @@
 package com.pidima.chatbot.services.ai;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pidima.chatbot.config.OpenAiProperties;
 import com.pidima.chatbot.models.ChatMessage;
 import java.net.URI;
@@ -13,8 +11,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Component
@@ -24,12 +26,10 @@ public class OpenAiProvider implements AiProvider {
 
     private final OpenAiProperties properties;
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
 
     public OpenAiProvider(OpenAiProperties properties) {
         this.properties = properties;
         this.restTemplate = new RestTemplate();
-        this.objectMapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     @Override
@@ -53,10 +53,48 @@ public class OpenAiProvider implements AiProvider {
             if (response != null && response.choices != null && !response.choices.isEmpty()) {
                 return response.choices.get(0).message.content;
             }
+        } catch (HttpClientErrorException e) {
+            handleClientError(e);
+        } catch (HttpServerErrorException e) {
+            handleServerError(e);
+        } catch (RestClientException e) {
+            log.error("Network error calling OpenAI API: {}", e.getMessage());
         } catch (Exception e) {
-            log.warn("OpenAI call failed, falling back: {}", e.getMessage());
+            log.error("Unexpected error calling OpenAI API: {}", e.getMessage(), e);
         }
         return "I'm sorry, I couldn't generate a response at this time.";
+    }
+
+    private void handleClientError(HttpClientErrorException e) {
+        HttpStatusCode status = e.getStatusCode();
+        String responseBody = e.getResponseBodyAsString();
+        
+        if (status.value() == 401) {
+            log.error("OpenAI API authentication failed. Please check your API key.");
+        } else if (status.value() == 403) {
+            log.error("OpenAI API access forbidden. Please check your API key permissions.");
+        } else if (status.value() == 429) {
+            log.warn("OpenAI API rate limit exceeded. Response: {}", responseBody);
+        } else if (status.value() == 400) {
+            log.error("Invalid request to OpenAI API: {}", responseBody);
+        } else {
+            log.error("OpenAI API client error {}: {}", status, responseBody);
+        }
+    }
+
+    private void handleServerError(HttpServerErrorException e) {
+        HttpStatusCode status = e.getStatusCode();
+        String responseBody = e.getResponseBodyAsString();
+        
+        if (status.value() == 500) {
+            log.error("OpenAI API internal server error: {}", responseBody);
+        } else if (status.value() == 502) {
+            log.error("OpenAI API bad gateway error: {}", responseBody);
+        } else if (status.value() == 503) {
+            log.error("OpenAI API service unavailable: {}", responseBody);
+        } else {
+            log.error("OpenAI API server error {}: {}", status, responseBody);
+        }
     }
 
     static class OpenAiRequest {
