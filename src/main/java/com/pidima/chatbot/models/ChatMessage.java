@@ -1,5 +1,6 @@
 package com.pidima.chatbot.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -27,6 +28,7 @@ public class ChatMessage {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id", insertable = false, updatable = false)
+    @JsonIgnore
     private ChatSession chatSession;
 
     public ChatMessage() {}
