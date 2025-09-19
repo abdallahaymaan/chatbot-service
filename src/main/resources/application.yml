@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: chatbot-service
+  jackson:
+    serialization:
+      INDENT_OUTPUT: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info"
+
+openai:
+  base-url: "https://api.openai.com/v1"
+  api-key: "${OPENAI_API_KEY:}"
+  model: "gpt-4o-mini"
+
+logging:
+  level:
+    root: INFO
+    com.pidima.chatbot: INFO
+
+
