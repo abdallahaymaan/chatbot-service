@@ -1,7 +1,7 @@
-package com.pidima.chatbot.services;
+package com.pidima.chatbot.repositories;
 
 import com.pidima.chatbot.models.ChatSession;
-import com.pidima.chatbot.repositories.ChatSessionRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
