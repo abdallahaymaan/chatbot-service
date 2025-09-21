@@ -15,7 +15,6 @@ public class ChatRepository {
     
     private final ChatSessionRepository chatSessionRepository;
     
-    @Autowired
     public ChatRepository(ChatSessionRepository chatSessionRepository) {
         this.chatSessionRepository = chatSessionRepository;
     }
